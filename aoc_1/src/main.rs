@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use util::res::Result;
 use structopt::StructOpt;
 
@@ -21,12 +21,15 @@ impl std::str::FromStr for Expense {
     }
 }
 
-fn find_two_entries_summing_to_num(expenses: &Vec<Expense>, num: u32) -> Option<(u32, u32)> {
-    let seen: HashSet<u32> = expenses.iter().map(|e| e.amount).collect();
-    for expense in expenses {
+fn find_two_entries_summing_to_num(expenses: &Vec<Expense>, num: u32, ignore: Option<usize>) -> Option<(u32, u32)> {
+    let seen: HashMap<u32, usize> = expenses.iter().enumerate().map(|(idx, e)| (e.amount, idx)).collect();
+    for (idx, expense) in expenses.iter().enumerate() {
         if expense.amount > num { continue; }
-        if seen.contains(&(num - expense.amount)) {
-            return Some((num - expense.amount, expense.amount))
+        if Some(idx) == ignore { continue; }
+
+        match seen.get(&(num - expense.amount)) {
+            Some(seen_idx) if *seen_idx != idx => return Some((num - expense.amount, expense.amount)),
+            _ => (),
         }
     }
     
@@ -34,17 +37,17 @@ fn find_two_entries_summing_to_num(expenses: &Vec<Expense>, num: u32) -> Option<
 }
 
 fn part1(expenses: &Vec<Expense>) {
-    match find_two_entries_summing_to_num(expenses, 2020) {
+    match find_two_entries_summing_to_num(expenses, 2020, None) {
         Some((a, b)) => println!("Found numbers {}, {} - product = {}", a, b, a * b),
         None => println!("Did not find any pair of numbers summing to 2020")
     }
 }
 
 fn part2(expenses: &Vec<Expense>) {
-    for expense in expenses {
+    for (idx, expense) in expenses.iter().enumerate() {
         let a = expense.amount;
         let remaining = 2020 - expense.amount;
-        if let Some((b, c)) = find_two_entries_summing_to_num(expenses, remaining) {
+        if let Some((b, c)) = find_two_entries_summing_to_num(expenses, remaining, Some(idx)) {
             println!("Found numbers {}, {}, {} - product = {}", a, b, c, a*b*c);
             return;
         }
