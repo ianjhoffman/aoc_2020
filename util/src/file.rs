@@ -37,6 +37,12 @@ impl From<std::io::Error> for GenericParseError {
     }
 }
 
+impl From<std::num::ParseIntError> for GenericParseError {
+    fn from(error: std::num::ParseIntError) -> Self {
+        GenericParseError::ValueError(error.to_string())
+    }
+}
+
 impl std::error::Error for GenericParseError {}
 
 // To use read_lines_to_type, make sure your struct implements FromStr with:
