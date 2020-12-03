@@ -22,8 +22,8 @@ impl std::str::FromStr for Row {
 
 fn count_trees_at_angle(rows: &Vec<Row>, right: usize, down: usize) -> usize {
     let modulus = rows[0].tree_pattern.len();
-    rows.iter().step_by(down).enumerate().filter(|(row_idx, row)| {
-        row.tree_pattern[(row_idx * right) % modulus]
+    rows.iter().step_by(down).enumerate().filter(|(step_count, row)| {
+        row.tree_pattern[(step_count * right) % modulus]
     }).count()
 }
 
