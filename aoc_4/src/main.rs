@@ -80,8 +80,7 @@ impl<'a> ParsedField<'a> {
 }
 
 struct Passport<'a> {
-    present_fields: HashSet<&'a str>,
-    parsed_fields: Vec<ParsedField<'a>>,
+    parsed_fields: HashMap<&'a str, ParsedField<'a>>,
 }
 
 impl<'a> Passport<'a> {
@@ -92,10 +91,11 @@ impl<'a> Passport<'a> {
             ].iter().map(|f| *f).collect::<HashSet<&'static str>>();
         };
         
-        if self.present_fields.intersection(&REQUIRED_FIELDS).count() != REQUIRED_FIELDS.len() {
+        let present_fields = self.parsed_fields.keys().map(|k| *k).collect::<HashSet<&str>>();
+        if present_fields.intersection(&REQUIRED_FIELDS).count() != REQUIRED_FIELDS.len() {
             return false;
         }
-        keys_only || self.parsed_fields.iter().all(|pf| pf.is_valid())
+        keys_only || self.parsed_fields.values().all(|pf| pf.is_valid())
     }
 }
 
@@ -108,10 +108,9 @@ fn file_contents_to_passports(contents: &String) -> Result<Vec<Passport>> {
     for line in contents.lines().chain(std::iter::once("")) {
         if line == "" {
             out.push(Passport{
-                present_fields: curr_field_values.keys().map(|k| *k).collect::<HashSet<&str>>(),
                 parsed_fields: curr_field_values.iter()
-                    .map(|(k, v)| ParsedField::from_key_and_value(k, v))
-                    .collect::<Result<Vec<ParsedField>>>()?,
+                    .map(|(k, v)| Ok((*k, ParsedField::from_key_and_value(k, v)?)))
+                    .collect::<Result<HashMap<&str, ParsedField>>>()?,
             });
 
             curr_field_values.clear();
