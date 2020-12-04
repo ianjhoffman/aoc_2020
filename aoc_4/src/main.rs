@@ -85,7 +85,7 @@ struct Passport<'a> {
 }
 
 impl<'a> Passport<'a> {
-    fn is_valid(&self, check_values: bool) -> bool {
+    fn is_valid(&self, keys_only: bool) -> bool {
         lazy_static! {
             static ref REQUIRED_FIELDS: HashSet<&'static str> = [
                 "byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid",
@@ -95,11 +95,7 @@ impl<'a> Passport<'a> {
         if self.present_fields.intersection(&REQUIRED_FIELDS).count() != REQUIRED_FIELDS.len() {
             return false;
         }
-        if check_values { self.check_values() } else { true }
-    }
-
-    fn check_values(&self) -> bool { 
-        self.parsed_fields.iter().all(|pf| pf.is_valid())
+        keys_only || self.parsed_fields.iter().all(|pf| pf.is_valid())
     }
 }
 
@@ -134,16 +130,16 @@ fn file_contents_to_passports(contents: &String) -> Result<Vec<Passport>> {
     Ok(out)
 }
 
-fn get_num_valid_passports(passports: &Vec<Passport>, check_values: bool) -> usize {
-    passports.iter().filter(|p| p.is_valid(check_values)).count()
+fn get_num_valid_passports(passports: &Vec<Passport>, keys_only: bool) -> usize {
+    passports.iter().filter(|p| p.is_valid(keys_only)).count()
 }
 
 fn part1(passports: &Vec<Passport>) {
-    println!("[Part 1] {} / {} passports are valid", get_num_valid_passports(passports, false), passports.len());
+    println!("[Part 1] {} / {} passports are valid", get_num_valid_passports(passports, true), passports.len());
 }
 
 fn part2(passports: &Vec<Passport>) {
-    println!("[Part 1] {} / {} passports are valid", get_num_valid_passports(passports, true), passports.len());
+    println!("[Part 1] {} / {} passports are valid", get_num_valid_passports(passports, false), passports.len());
 }
 
 fn main() -> Result<()> {
