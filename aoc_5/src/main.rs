@@ -45,26 +45,17 @@ fn part1(boarding_seats: &Vec<BoardingSeat>) {
 
 fn part2(boarding_seats: &Vec<BoardingSeat>) {
     let seat_id_set: HashSet<u16> = boarding_seats.iter().map(|s| s.get_id()).collect::<HashSet<u16>>();
-    let missing_seat_id = (|| {
-        for row in 1..=126 {
-            for col in 0..=7 {
-                let seat_id = BoardingSeat{row, col}.get_id();
-                if !seat_id_set.contains(&seat_id) {
-                    if seat_id_set.contains(&(seat_id - 1)) && seat_id_set.contains(&(seat_id + 1)) {
-                        return Some(seat_id);
-                    }
-                }
+    for row in 1..=126 {
+        for col in 0..=7 {
+            let seat_id = BoardingSeat{row, col}.get_id();
+            if !seat_id_set.contains(&seat_id) && seat_id_set.contains(&(seat_id - 1)) && seat_id_set.contains(&(seat_id + 1)) {
+                println!("[Part 2] Your seat ID is {}", seat_id);
+                return;
             }
         }
-
-        None
-    })();
-
-    if let Some(seat_id) = missing_seat_id {
-        println!("[Part 2] Your seat ID is {}", seat_id);
-    } else {
-        println!("[Part 2] No valid missing seat ID found!");
     }
+
+    println!("[Part 2] No valid missing seat ID found!");
 }
 
 fn main() -> Result<()> {
