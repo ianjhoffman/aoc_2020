@@ -22,15 +22,15 @@ fn file_contents_to_group_answers(contents: &String) -> Vec<GroupAnswers> {
     // Add an extra blank line to the end of the lines so we don't have to do extra post-loop logic
     for line in contents.lines().chain(std::iter::once("")) {
         if line == "" {
-            out.push(GroupAnswers{num_people: people_in_group, num_yeses_by_question: curr_yeses_by_question.clone()});
-            curr_yeses_by_question.clear();
+            let num_yeses_by_question = curr_yeses_by_question.drain().collect();
+            out.push(GroupAnswers{num_people: people_in_group, num_yeses_by_question: num_yeses_by_question});
             people_in_group = 0;
         } else {
-            people_in_group += 1;
             line.chars().for_each(|c| {
                 let people_with_yes_entry = curr_yeses_by_question.entry(c).or_insert(0);
                 *people_with_yes_entry += 1;
             });
+            people_in_group += 1;
         }
     }
 
