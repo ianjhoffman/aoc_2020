@@ -21,36 +21,18 @@ impl std::str::FromStr for Instruction {
     type Err = GenericParseError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match &s.split_whitespace().collect::<Vec<&str>>()[..] {
-            ["nop", v] if v.starts_with(&['+', '-'][..]) => {
-                Ok(Instruction::Nop(v.parse::<i64>()?))
+        let e = Err(GenericParseError::ValueError(format!("Invalid instruction: {}", s).to_owned()));
+        Ok(match &s.split_whitespace().collect::<Vec<&str>>()[..] {
+            [name, v] if v.starts_with(&['+', '-'][..]) => {
+                match *name {
+                    "nop" => Instruction::Nop(v.parse::<i64>()?),
+                    "acc" => Instruction::Acc(v.parse::<i64>()?),
+                    "jmp" => Instruction::Jmp(v.parse::<i64>()?),
+                    _ => return e,
+                }
             },
-            ["acc", v] if v.starts_with(&['+', '-'][..]) => {
-                Ok(Instruction::Acc(v.parse::<i64>()?))
-            },
-            ["jmp", v] if v.starts_with(&['+', '-'][..]) => {
-                Ok(Instruction::Jmp(v.parse::<i64>()?))
-            },
-            _ => Err(GenericParseError::ValueError(format!("Invalid instruction: {}", s).to_owned()))
-        }
-    }
-}
-
-struct ProgramState {
-    ip: usize,
-    acc: i64,
-}
-
-impl ProgramState {
-    fn eval(&mut self, inst: &Instruction) {
-        match inst {
-            Instruction::Nop(_) => self.ip += 1,
-            Instruction::Acc(v) => {
-                self.acc += v;
-                self.ip += 1;
-            },
-            Instruction::Jmp(v) => self.ip = (self.ip as i64 + *v) as usize,
-        }
+            _ => return e,
+        })
     }
 }
 
@@ -64,17 +46,23 @@ impl BootCode {
     }
 
     fn eval_until_repeat_or_end(&self) -> (i64, bool) {
-        let mut program_state = ProgramState{ip: 0, acc: 0};
+        let (mut ip, mut acc): (usize, i64) = (0, 0);
         let mut seen_ips: HashSet<usize> = vec![0].into_iter().collect();
         loop {
-            let curr_acc = program_state.acc;
-            program_state.eval(&self.instructions[program_state.ip]);
+            let (new_ip, new_acc) = match self.instructions[ip] {
+                Instruction::Nop(_) => (ip + 1, acc),
+                Instruction::Acc(v) => (ip + 1, acc + v),
+                Instruction::Jmp(v) => ((v + ip as i64) as usize, acc),
+            };
 
             // Program repeated itself
-            if !seen_ips.insert(program_state.ip) { return (curr_acc, false); }
+            if !seen_ips.insert(new_ip) { return (acc, false); }
 
             // Program terminated
-            if program_state.ip == self.instructions.len() { return (program_state.acc, true); }
+            if new_ip == self.instructions.len() { return (new_acc, true); }
+
+            ip = new_ip;
+            acc = new_acc;
         }
     }
 }
@@ -85,28 +73,20 @@ fn part1(instructions: &Vec<Instruction>) {
 }
 
 fn part2(instructions: &Vec<Instruction>) {
-    let found = instructions.iter().enumerate().filter(|(_, instr)| {
+    match instructions.iter().enumerate().filter_map(|(idx, instr)| {
         match instr {
-            Instruction::Nop(_) | Instruction::Jmp(_) => true,
-            _ => false,
+            Instruction::Nop(v) => Some((idx, Instruction::Jmp(*v))),
+            Instruction::Jmp(v) => Some((idx, Instruction::Nop(*v))),
+            Instruction::Acc(_) => None,
         }
-    }).map(|(idx, instr)| {
-        let new_instr = match &instr {
-            Instruction::Nop(v) => Instruction::Jmp(*v),
-            Instruction::Jmp(v) => Instruction::Nop(*v),
-            Instruction::Acc(v) => Instruction::Acc(*v), // Shouldn't ever happen
-        };
-
+    }).map(|(idx, new_instr)| {
         let mut modified_instructions = instructions.clone();
         modified_instructions[idx] = new_instr;
         BootCode::new(modified_instructions).eval_until_repeat_or_end()
-    }).find(|(_, finished)| *finished);
-
-    if let Some((acc, _)) = found {
-        return println!("[Part 2] Value of `acc` after final instruction: {}", acc);
+    }).find(|(_, finished)| *finished) {
+        Some((acc, _)) => println!("[Part 2] Value of `acc` after final instruction: {}", acc),
+        None => println!("[Part 2] Could not perform any swaps that resulted in program termination!")
     }
-
-    println!("[Part 2] Could not perform any swaps that resulted in program termination!")
 }
 
 fn main() -> Result<()> {
