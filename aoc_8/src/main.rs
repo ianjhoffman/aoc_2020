@@ -36,39 +36,29 @@ impl std::str::FromStr for Instruction {
     }
 }
 
-struct BootCode {
-    instructions: Vec<Instruction>,
-}
+fn eval_until_repeat_or_end(instructions: &Vec<Instruction>) -> (i64, bool) {
+    let (mut ip, mut acc): (usize, i64) = (0, 0);
+    let mut seen_ips: HashSet<usize> = vec![0].into_iter().collect();
+    loop {
+        let (new_ip, new_acc) = match instructions[ip] {
+            Instruction::Nop(_) => (ip + 1, acc),
+            Instruction::Acc(v) => (ip + 1, acc + v),
+            Instruction::Jmp(v) => ((v + ip as i64) as usize, acc),
+        };
 
-impl BootCode {
-    fn new(instructions: Vec<Instruction>) -> Self {
-        BootCode{instructions: instructions}
-    }
+        // Program repeated itself
+        if !seen_ips.insert(new_ip) { return (acc, false); }
 
-    fn eval_until_repeat_or_end(&self) -> (i64, bool) {
-        let (mut ip, mut acc): (usize, i64) = (0, 0);
-        let mut seen_ips: HashSet<usize> = vec![0].into_iter().collect();
-        loop {
-            let (new_ip, new_acc) = match self.instructions[ip] {
-                Instruction::Nop(_) => (ip + 1, acc),
-                Instruction::Acc(v) => (ip + 1, acc + v),
-                Instruction::Jmp(v) => ((v + ip as i64) as usize, acc),
-            };
+        // Program terminated
+        if new_ip == instructions.len() { return (new_acc, true); }
 
-            // Program repeated itself
-            if !seen_ips.insert(new_ip) { return (acc, false); }
-
-            // Program terminated
-            if new_ip == self.instructions.len() { return (new_acc, true); }
-
-            ip = new_ip;
-            acc = new_acc;
-        }
+        ip = new_ip;
+        acc = new_acc;
     }
 }
 
 fn part1(instructions: &Vec<Instruction>) {
-    let acc_value_before_first_repeat = BootCode::new(instructions.clone()).eval_until_repeat_or_end();
+    let acc_value_before_first_repeat = eval_until_repeat_or_end(instructions);
     println!("[Part 1] Value of `acc` before first IP repeat: {}", acc_value_before_first_repeat.0);
 }
 
@@ -82,7 +72,7 @@ fn part2(instructions: &Vec<Instruction>) {
     }).map(|(idx, new_instr)| {
         let mut modified_instructions = instructions.clone();
         modified_instructions[idx] = new_instr;
-        BootCode::new(modified_instructions).eval_until_repeat_or_end()
+        eval_until_repeat_or_end(&modified_instructions)
     }).find(|(_, finished)| *finished) {
         Some((acc, _)) => println!("[Part 2] Value of `acc` after final instruction: {}", acc),
         None => println!("[Part 2] Could not perform any swaps that resulted in program termination!")
