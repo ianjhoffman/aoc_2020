@@ -1,15 +1,7 @@
 #[macro_use] extern crate lazy_static;
 
-use std::path::PathBuf;
 use std::collections::{HashMap, HashSet};
 use util::res::Result;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
 
 #[derive(Clone, Copy)]
 enum HeightUnit {
@@ -142,9 +134,8 @@ fn part2(passports: &Vec<Passport>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-
-    let contents = util::file::read_to_string(opt.file)?;
+    let file_path = util::file::get_input_file_path();
+    let contents = util::file::read_to_string(file_path)?;
     let passports = file_contents_to_passports(&contents)?;
 
     part1(&passports);

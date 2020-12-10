@@ -1,17 +1,9 @@
 #[macro_use] extern crate lazy_static;
 
-use std::path::PathBuf;
 use std::collections::{HashMap, HashSet, VecDeque};
 use regex::Regex;
 use util::res::Result;
 use util::file::GenericParseError;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
 
 #[derive(Clone)]
 struct BagRule {
@@ -107,8 +99,8 @@ fn part2(bag_rules: &Vec<BagRule>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-    let bag_rules: Vec<BagRule> = util::file::read_lines_to_type::<BagRule>(opt.file)?;
+    let file_path = util::file::get_input_file_path();
+    let bag_rules: Vec<BagRule> = util::file::read_lines_to_type::<BagRule>(file_path)?;
 
     part1(&bag_rules);
     part2(&bag_rules);

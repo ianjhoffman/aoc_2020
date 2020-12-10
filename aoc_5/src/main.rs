@@ -1,14 +1,6 @@
-use std::path::PathBuf;
 use std::collections::HashSet;
 use util::res::Result;
 use util::file::GenericParseError;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
 
 struct BoardingSeat {
     row: u8,
@@ -59,11 +51,10 @@ fn part2(boarding_seats: &Vec<BoardingSeat>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-    let boarding_seats: Vec<BoardingSeat> = util::file::read_lines_to_type::<BoardingSeat>(opt.file)?;
+    let file_path = util::file::get_input_file_path();
+    let boarding_seats: Vec<BoardingSeat> = util::file::read_lines_to_type::<BoardingSeat>(file_path)?;
 
     part1(&boarding_seats);
     part2(&boarding_seats);
-
     Ok(())
 }

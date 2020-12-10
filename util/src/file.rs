@@ -3,7 +3,19 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
 use std::str::FromStr;
+use structopt::StructOpt;
 use super::res::Result;
+
+#[derive(Debug, StructOpt)]
+struct Cli {
+    #[structopt(short = "f", parse(from_os_str))]
+    file: PathBuf,
+}
+
+pub fn get_input_file_path() -> PathBuf {
+    let opt = Cli::from_args();
+    opt.file
+}
 
 pub fn read_to_string(path: PathBuf) -> Result<String> {
     let f = File::open(path)?;
@@ -53,5 +65,14 @@ pub fn read_lines_to_type<T: FromStr<Err = GenericParseError>>(path: PathBuf) ->
 
     reader.lines().map(|line| {
         line.map_or(Err(GenericParseError::LineError), |l| l.parse::<T>()).map_err(|e| e.into())
+    }).collect()
+}
+
+pub fn read_lines_to_integers<T: FromStr<Err = std::num::ParseIntError>>(path: PathBuf) -> Result<Vec<T>> {
+    let f = File::open(path)?;
+    let reader = BufReader::new(f);
+
+    reader.lines().map(|line| {
+        line.map_or(Err(From::from("Bad line")), |l| l.parse::<T>().map_err(|e| e.into()))
     }).collect()
 }

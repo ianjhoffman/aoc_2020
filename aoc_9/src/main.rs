@@ -1,26 +1,6 @@
-use std::path::PathBuf;
 use std::collections::HashSet;
 use std::cmp::Ordering;
 use util::res::Result;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
-
-struct Number {
-    n: u64,
-}
-
-impl std::str::FromStr for Number{
-    type Err = util::file::GenericParseError;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(Number{n: s.parse::<u64>()?})
-    }
-}
 
 fn part1(numbers: &Vec<u64>) -> Result<u64> {
     let mut seen: HashSet<u64> = HashSet::new();
@@ -75,9 +55,8 @@ fn part2(numbers: &Vec<u64>, unsummable: u64) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-    let numbers: Vec<u64> = util::file::read_lines_to_type::<Number>(opt.file)?
-        .into_iter().map(|num| num.n).collect();
+    let file_path = util::file::get_input_file_path();
+    let numbers: Vec<u64> = util::file::read_lines_to_integers::<u64>(file_path)?;
 
     let unsummable = part1(&numbers)?;
     part2(&numbers, unsummable);

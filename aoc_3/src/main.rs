@@ -1,12 +1,4 @@
-use std::path::PathBuf;
 use util::res::Result;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
 
 struct Row {
     tree_pattern: Vec<bool>,
@@ -48,9 +40,8 @@ fn part2(rows: &Vec<Row>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-
-    let rows: Vec<Row> = util::file::read_lines_to_type::<Row>(opt.file)?;
+    let file_path = util::file::get_input_file_path();
+    let rows: Vec<Row> = util::file::read_lines_to_type::<Row>(file_path)?;
 
     part1(&rows);
     part2(&rows);

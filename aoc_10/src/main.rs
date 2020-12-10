@@ -1,24 +1,4 @@
-use std::path::PathBuf;
 use util::res::Result;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
-
-struct JoltageRating {
-    rating: u64,
-}
-
-impl std::str::FromStr for JoltageRating {
-    type Err = util::file::GenericParseError;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(JoltageRating{rating: s.parse::<u64>()?})
-    }
-}
 
 fn part1(joltages: &Vec<u64>) {
     let (mut diffs_1, mut diffs_3, mut prev): (u64, u64, u64) = (0, 0, 0);
@@ -59,10 +39,8 @@ fn part2(joltages: &Vec<u64>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-    let mut joltages = util::file::read_lines_to_type::<JoltageRating>(opt.file)?
-        .into_iter().map(|jr| jr.rating).collect::<Vec<u64>>();
-    
+    let file_path = util::file::get_input_file_path();
+    let mut joltages = util::file::read_lines_to_integers::<u64>(file_path)?;
     joltages.sort();
 
     part1(&joltages);

@@ -1,14 +1,6 @@
-use std::path::PathBuf;
 use std::collections::HashSet;
 use util::res::Result;
 use util::file::GenericParseError;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
 
 #[derive(Debug, Clone)]
 enum Instruction {
@@ -80,8 +72,8 @@ fn part2(instructions: &Vec<Instruction>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
-    let instructions: Vec<Instruction> = util::file::read_lines_to_type::<Instruction>(opt.file)?;
+    let file_path = util::file::get_input_file_path();
+    let instructions: Vec<Instruction> = util::file::read_lines_to_type::<Instruction>(file_path)?;
 
     part1(&instructions);
     part2(&instructions);

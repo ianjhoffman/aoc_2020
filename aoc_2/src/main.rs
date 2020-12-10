@@ -1,15 +1,7 @@
 #[macro_use] extern crate lazy_static;
 
-use std::path::PathBuf;
 use regex::Regex;
 use util::res::Result;
-use structopt::StructOpt;
-
-#[derive(Debug, StructOpt)]
-struct Cli {
-    #[structopt(short = "f", parse(from_os_str))]
-    file: PathBuf,
-}
 
 struct Policy {
     letter: char,
@@ -74,11 +66,10 @@ fn part2(policies_and_passwords: &Vec<PolicyAndPassword>) {
 }
 
 fn main() -> Result<()> {
-    let opt = Cli::from_args();
+    let file_path = util::file::get_input_file_path();
+    let policies_and_passwords: Vec<PolicyAndPassword> = util::file::read_lines_to_type::<PolicyAndPassword>(file_path)?;
 
-    let policies_and_passwords: Vec<PolicyAndPassword> = util::file::read_lines_to_type::<PolicyAndPassword>(opt.file)?;
     part1(&policies_and_passwords);
     part2(&policies_and_passwords);
-
     Ok(())
 }
