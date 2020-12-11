@@ -18,8 +18,9 @@ cargo new "$DIRNAME" --bin --vcs none
 # Add common dependencies to Cargo.toml
 cat ./templates/cargo.txt >> "$DIRNAME/Cargo.toml"
 
-# Make input directory for input file
+# Make input directory for input file, as well as blank input file
 mkdir "$DIRNAME/input"
+touch "$DIRNAME/input/input.txt"
 
 # Overwrite main.rs with template
 cat ./templates/main.rs > "$DIRNAME/src/main.rs"
