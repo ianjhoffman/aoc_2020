@@ -50,39 +50,28 @@ fn rotate_waypoint(waypoint: (i64, i64), degrees: i64, left: bool) -> (i64, i64)
 }
 
 struct Ship {
-    x: i64,
-    y: i64,
+    position: (i64, i64), // x, y
     waypoint: (i64, i64),
     cardinal_directions_move_waypoint: bool,
 }
 
 impl Ship {
     fn new(waypoint: (i64, i64), cardinal_directions_move_waypoint: bool) -> Self {
-        Ship{ x: 0, y: 0, waypoint, cardinal_directions_move_waypoint }
+        Ship{ position: (0, 0), waypoint, cardinal_directions_move_waypoint }
+    }
+
+    fn apply_cardinal_offset(&mut self, offset: (i64, i64)) {
+        let target = if self.cardinal_directions_move_waypoint { &mut self.waypoint } else { &mut self.position };
+        target.0 += offset.0;
+        target.1 += offset.1;
     }
 
     fn apply_instruction(&mut self, instruction: &Instruction) {
         match instruction.action {
-            Action::North => if self.cardinal_directions_move_waypoint {
-                self.waypoint.1 += instruction.value
-            } else {
-                self.y += instruction.value
-            },
-            Action::South => if self.cardinal_directions_move_waypoint {
-                self.waypoint.1 -= instruction.value
-            } else {
-                self.y -= instruction.value
-            },
-            Action::East => if self.cardinal_directions_move_waypoint {
-                self.waypoint.0 += instruction.value
-            } else {
-                self.x += instruction.value
-            },
-            Action::West => if self.cardinal_directions_move_waypoint {
-                self.waypoint.0 -= instruction.value
-            } else {
-                self.x -= instruction.value
-            },
+            Action::North => self.apply_cardinal_offset((0, instruction.value)),
+            Action::South => self.apply_cardinal_offset((0, -instruction.value)),
+            Action::East => self.apply_cardinal_offset((instruction.value, 0)),
+            Action::West => self.apply_cardinal_offset((-instruction.value, 0)),
             Action::Left | Action::Right => {
                 self.waypoint = rotate_waypoint(
                     self.waypoint,
@@ -91,23 +80,25 @@ impl Ship {
                 );
             },
             Action::Forward => {
-                self.x += instruction.value * self.waypoint.0;
-                self.y += instruction.value * self.waypoint.1;
+                self.position.0 += instruction.value * self.waypoint.0;
+                self.position.1 += instruction.value * self.waypoint.1;
             },
         }
     }
+
+    fn manhattan_distance(&self) -> i64 { self.position.0.abs() + self.position.1.abs() }
 }
 
 fn part1(instructions: &Vec<Instruction>) {
     let mut ship = Ship::new((1, 0), false); // Start east
     instructions.iter().for_each(|instr| ship.apply_instruction(instr));
-    println!("[Part 1] Ship x = {}, Ship y = {}, Manhattan distance = {}", ship.x, ship.y, ship.x.abs() + ship.y.abs());
+    println!("[Part 1] Manhattan distance = {}", ship.manhattan_distance());
 }
 
 fn part2(instructions: &Vec<Instruction>) {
     let mut ship = Ship::new((10, 1), true);
     instructions.iter().for_each(|instr| ship.apply_instruction(instr));
-    println!("[Part 2] Ship x = {}, Ship y = {}, Manhattan distance = {}", ship.x, ship.y, ship.x.abs() + ship.y.abs());
+    println!("[Part 2] Manhattan distance = {}", ship.manhattan_distance());
 }
 
 fn main() -> Result<()> {
