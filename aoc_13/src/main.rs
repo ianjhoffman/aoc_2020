@@ -57,10 +57,9 @@ fn part2(bus_ids: &Vec<(usize, u64)>) {
     //
 
     let relation_info: Vec<BusRelationInfo> = bus_ids[1..].iter().map(|&(offset, id)| {
-        let lcm_minutes = lcm(first, id as i128);
         BusRelationInfo{
             first_bus_cycle_count: solve_linear_congruence(first, (-(offset as i128)).rem_euclid(id as i128), id as i128),
-            subsequent_cycle_count: lcm_minutes / first,
+            subsequent_cycle_count: lcm(first, id as i128) / first,
         }
     }).collect();
 
@@ -80,7 +79,7 @@ fn part2(bus_ids: &Vec<(usize, u64)>) {
     // only have 1 equation.
     //
     // We initialize this fold with (0, 1) as the accumulator, which represents:
-    //     - The first bus will arrive the propr # of minutes before Bus_N for the first time
+    //     - The first bus will arrive the proper # of minutes before Bus_N for the first time
     //       after 0 first bus cycles (repeating that offset every 1 subsequent cycle)
     // as sort of an "identity"
     //
