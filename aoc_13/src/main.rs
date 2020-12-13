@@ -49,19 +49,18 @@ fn part2(bus_ids: &Vec<(usize, u64)>) {
     //
     // First we will find the # bus cycles of the first bus before it arrives n
     // minutes before the other bus (where n is that bus' index) for each other bus. 
+    // We can phrase this as a linear congruence and solve for the # of first bus cycles:
+    //     - <first_bus_minutes> * x ≡ -<offset> (mod <other_bus_minutes>)
+    //
     // We then know that this spacing will repeat every time LCM(first, other bus)
     // minutes pass a.k.a [LCM(first, other bus) / first] cycles of the first bus.
     //
 
     let relation_info: Vec<BusRelationInfo> = bus_ids[1..].iter().map(|&(offset, id)| {
-        let lcm = lcm(first, id as i128);
+        let lcm_minutes = lcm(first, id as i128);
         BusRelationInfo{
-            first_bus_cycle_count: (0..lcm/first).skip_while(|&num_cycles| {
-                let num_minutes = num_cycles * first;
-                let minutes_after_last = num_minutes % id as i128;
-                (minutes_after_last + offset as i128) % (id as i128) != 0
-            }).nth(0).unwrap() as i128,
-            subsequent_cycle_count: lcm / first,
+            first_bus_cycle_count: solve_linear_congruence(first, (-(offset as i128)).rem_euclid(id as i128), id as i128),
+            subsequent_cycle_count: lcm_minutes / first,
         }
     }).collect();
 
