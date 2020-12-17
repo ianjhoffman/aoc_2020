@@ -1,5 +1,4 @@
 #[macro_use] extern crate lazy_static;
-
 use std::collections::{HashMap, HashSet};
 use util::res::Result;
 
@@ -8,71 +7,49 @@ trait Coordinate {
     fn get_adjacent_coordinates(&self) -> Box<dyn Iterator<Item = Self>>;
 }
 
-#[derive(PartialEq, Eq, std::hash::Hash)]
-struct Coordinate3D {
-    coords: (i64, i64, i64),
-}
-
-impl Coordinate for Coordinate3D {
-    fn from_3d(input: (i64, i64, i64)) -> Self {
-        Coordinate3D{ coords: input }
-    }
-
+impl Coordinate for [i64; 3] {
+    fn from_3d(input: (i64, i64, i64)) -> Self { [input.0, input.1, input.2] }
     fn get_adjacent_coordinates(&self) -> Box<dyn Iterator<Item = Self>> {
         lazy_static! {
-            static ref ADJACENCY_OFFSETS: HashSet<(i64, i64, i64)> = {
-                let mut out: HashSet<(i64, i64, i64)> = HashSet::new();
-                for x in -1..=1 {
-                    for y in -1..=1 {
-                        for z in -1..=1 {
-                            out.insert((x, y, z));
-                        }
-                    }
+            static ref ADJACENCY_OFFSETS: HashSet<[i64; 3]> = {
+                let mut out: HashSet<[i64; 3]> = vec![[0, 0, 0]].into_iter().collect();
+                for idx in 0..3 {
+                    out = out.into_iter().flat_map(|incomplete| (-1..=1).map(move |offset| {
+                        let mut cloned = incomplete.clone();
+                        cloned[idx] = offset;
+                        cloned
+                    })).collect();
                 }
-                out.remove(&(0, 0, 0));
+                out.remove(&[0, 0, 0]);
                 out
             };
         };
 
-        let coords = self.clone().coords;
-        Box::new(ADJACENCY_OFFSETS.iter().map(move |(ox, oy, oz)| {
-            Coordinate3D{ coords: (coords.0 + ox, coords.1 + oy, coords.2 + oz) }
-        }))
+        let c = self.clone();
+        Box::new(ADJACENCY_OFFSETS.iter().map(move |o| [c[0] + o[0], c[1] + o[1], c[2] + o[2]]))
     }
 }
 
-#[derive(PartialEq, Eq, std::hash::Hash)]
-struct Coordinate4D {
-    coords: (i64, i64, i64, i64),
-}
-
-impl Coordinate for Coordinate4D {
-    fn from_3d(input: (i64, i64, i64)) -> Self {
-        Coordinate4D{ coords: (input.0, input.1, input.2, 0) }
-    }
-
+impl Coordinate for [i64; 4] {
+    fn from_3d(input: (i64, i64, i64)) -> Self { [input.0, input.1, input.2, 0] }
     fn get_adjacent_coordinates(&self) -> Box<dyn Iterator<Item = Self>> {
         lazy_static! {
-            static ref ADJACENCY_OFFSETS: HashSet<(i64, i64, i64, i64)> = {
-                let mut out: HashSet<(i64, i64, i64, i64)> = HashSet::new();
-                for x in -1..=1 {
-                    for y in -1..=1 {
-                        for z in -1..=1 {
-                            for w in -1..=1 {
-                                out.insert((x, y, z, w));
-                            }
-                        }
-                    }
+            static ref ADJACENCY_OFFSETS: HashSet<[i64; 4]> = {
+                let mut out: HashSet<[i64; 4]> = vec![[0, 0, 0, 0]].into_iter().collect();
+                for idx in 0..4 {
+                    out = out.into_iter().flat_map(|incomplete| (-1..=1).map(move |offset| {
+                        let mut cloned = incomplete.clone();
+                        cloned[idx] = offset;
+                        cloned
+                    })).collect();
                 }
-                out.remove(&(0, 0, 0, 0));
+                out.remove(&[0, 0, 0, 0]);
                 out
             };
         };
 
-        let coords = self.clone().coords;
-        Box::new(ADJACENCY_OFFSETS.iter().map(move |(ox, oy, oz, ow)| {
-            Coordinate4D{ coords: (coords.0 + ox, coords.1 + oy, coords.2 + oz, coords.3 + ow) }
-        }))
+        let c = self.clone();
+        Box::new(ADJACENCY_OFFSETS.iter().map(move |o| [c[0] + o[0], c[1] + o[1], c[2] + o[2], c[3] + o[3]]))
     }
 }
 
@@ -92,9 +69,8 @@ fn transition_n<T>(starting_state: &HashSet<(i64, i64, i64)>, iterations: usize)
         }
 
         adjacency_counts.into_iter().filter_map(|(coords, num_adjacent)| {
-            match acc.contains(&coords) {
-                true if (2..=3).contains(&num_adjacent) => Some(coords),
-                false if num_adjacent == 3 => Some(coords),
+            match (acc.contains(&coords), num_adjacent) {
+                (true, 2) | (true, 3) | (false, 3) => Some(coords),
                 _ => None,
             }
         }).collect()
@@ -102,11 +78,11 @@ fn transition_n<T>(starting_state: &HashSet<(i64, i64, i64)>, iterations: usize)
 }
 
 fn part1(starting_state: &HashSet<(i64, i64, i64)>) {
-    println!("[Part 1] Active cubes after 6 cycles: {}", transition_n::<Coordinate3D>(starting_state, 6).len());
+    println!("[Part 1] Active cubes after 6 cycles: {}", transition_n::<[i64; 3]>(starting_state, 6).len());
 }
 
 fn part2(starting_state: &HashSet<(i64, i64, i64)>) {
-    println!("[Part 2] Active cubes after 6 cycles: {}", transition_n::<Coordinate4D>(starting_state, 6).len());
+    println!("[Part 2] Active cubes after 6 cycles: {}", transition_n::<[i64; 4]>(starting_state, 6).len());
 }
 
 fn main() -> Result<()> {
