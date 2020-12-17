@@ -55,11 +55,8 @@ impl Coordinate for [i64; 4] {
 
 fn transition_n<T>(starting_state: &HashSet<(i64, i64, i64)>, iterations: usize) -> HashSet<T>
     where T: Coordinate + Eq + std::hash::Hash {
-    let starting = starting_state.iter().cloned().map(|coords| {
-        T::from_3d(coords)
-    }).collect();
-
-    (0..iterations).fold(starting, |acc, _| {
+    (0..iterations).fold(starting_state.iter().cloned().map(|coords| T::from_3d(coords)).collect(), 
+    |acc, _| {
         // Set adjacency counts for all coordinates in 3D space next to active coordinates
         let mut adjacency_counts: HashMap<T, usize> = HashMap::new();
         for active_coords in &acc {
