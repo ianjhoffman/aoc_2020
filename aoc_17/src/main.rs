@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 use util::res::Result;
 
 trait Coordinate {
+    fn from_3d(input: (i64, i64, i64)) -> Self;
     fn get_adjacent_coordinates(&self) -> Box<dyn Iterator<Item = Self>>;
 }
 
@@ -13,6 +14,10 @@ struct Coordinate3D {
 }
 
 impl Coordinate for Coordinate3D {
+    fn from_3d(input: (i64, i64, i64)) -> Self {
+        Coordinate3D{ coords: input }
+    }
+
     fn get_adjacent_coordinates(&self) -> Box<dyn Iterator<Item = Self>> {
         lazy_static! {
             static ref ADJACENCY_OFFSETS: HashSet<(i64, i64, i64)> = {
@@ -42,6 +47,10 @@ struct Coordinate4D {
 }
 
 impl Coordinate for Coordinate4D {
+    fn from_3d(input: (i64, i64, i64)) -> Self {
+        Coordinate4D{ coords: (input.0, input.1, input.2, 0) }
+    }
+
     fn get_adjacent_coordinates(&self) -> Box<dyn Iterator<Item = Self>> {
         lazy_static! {
             static ref ADJACENCY_OFFSETS: HashSet<(i64, i64, i64, i64)> = {
@@ -67,46 +76,37 @@ impl Coordinate for Coordinate4D {
     }
 }
 
-fn transition<T>(state: &HashSet<T>) -> HashSet<T> where T: Coordinate + Eq + std::hash::Hash {
-    // Set adjacency counts for all coordinates in 3D space next to active coordinates
-    let mut adjacency_counts: HashMap<T, usize> = HashMap::new();
-    for active_coords in state {
-        for adjacent in active_coords.get_adjacent_coordinates() {
-            *adjacency_counts.entry(adjacent).or_insert(0) += 1;
-        }
-    }
+fn transition_n<T>(starting_state: &HashSet<(i64, i64, i64)>, iterations: usize) -> HashSet<T>
+    where T: Coordinate + Eq + std::hash::Hash {
+    let starting = starting_state.iter().cloned().map(|coords| {
+        T::from_3d(coords)
+    }).collect();
 
-    adjacency_counts.into_iter().filter_map(|(coords, num_adjacent)| {
-        match state.contains(&coords) {
-            true if (2..=3).contains(&num_adjacent) => Some(coords),
-            false if num_adjacent == 3 => Some(coords),
-            _ => None,
+    (0..iterations).fold(starting, |acc, _| {
+        // Set adjacency counts for all coordinates in 3D space next to active coordinates
+        let mut adjacency_counts: HashMap<T, usize> = HashMap::new();
+        for active_coords in &acc {
+            for adjacent in active_coords.get_adjacent_coordinates() {
+                *adjacency_counts.entry(adjacent).or_insert(0) += 1;
+            }
         }
-    }).collect()
+
+        adjacency_counts.into_iter().filter_map(|(coords, num_adjacent)| {
+            match acc.contains(&coords) {
+                true if (2..=3).contains(&num_adjacent) => Some(coords),
+                false if num_adjacent == 3 => Some(coords),
+                _ => None,
+            }
+        }).collect()
+    })
 }
 
 fn part1(starting_state: &HashSet<(i64, i64, i64)>) {
-    let starting_3d = starting_state.iter().cloned().map(|coords| {
-        Coordinate3D{ coords }
-    }).collect();
-
-    let after_six = (0..6).fold(starting_3d, |acc, _| {
-        transition::<Coordinate3D>(&acc)
-    });
-
-    println!("[Part 1] Active cubes after 6 cycles: {}", after_six.len());
+    println!("[Part 1] Active cubes after 6 cycles: {}", transition_n::<Coordinate3D>(starting_state, 6).len());
 }
 
 fn part2(starting_state: &HashSet<(i64, i64, i64)>) {
-    let starting_4d = starting_state.iter().cloned().map(|coords| {
-        Coordinate4D{ coords: (coords.0, coords.1, coords.2, 0) }
-    }).collect();
-
-    let after_six = (0..6).fold(starting_4d, |acc, _| {
-        transition::<Coordinate4D>(&acc)
-    });
-
-    println!("[Part 2] Active cubes after 6 cycles: {}", after_six.len());
+    println!("[Part 2] Active cubes after 6 cycles: {}", transition_n::<Coordinate4D>(starting_state, 6).len());
 }
 
 fn main() -> Result<()> {
