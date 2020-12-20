@@ -115,6 +115,7 @@ fn reorient_to_match(tile: &Tile, adjacent_to: Side, pixels: &[bool; 10], flippe
 
 struct PuzzleSolution {
     corner_id_product: u64,
+    dimension: usize,
     raw_image: HashMap<(usize, usize), bool>,
 }
 
@@ -217,12 +218,21 @@ fn solve_puzzle(tiles: &HashMap<u64, Tile>) -> PuzzleSolution {
 
     PuzzleSolution {
         corner_id_product: product,
+        dimension: side_length as usize,
         raw_image: assembled_to_raw_image(&assembled, lower_left, upper_right),
     }
 }
 
 fn part1(puzzle_solution: &PuzzleSolution) {
     println!("[Part 1] Product of corner tile IDs: {}", puzzle_solution.corner_id_product);
+}
+
+fn rotate_image_left(raw: &HashMap<(usize, usize), bool>, dimension: usize) -> HashMap<(usize, usize), bool> {
+    raw.iter().map(|(&(row, col), &v)| (((dimension * 8) - (1 + col), row), v)).collect()
+}
+
+fn flip_image_horizontal(raw: &HashMap<(usize, usize), bool>, dimension: usize) -> HashMap<(usize, usize), bool> {
+    raw.iter().map(|(&(row, col), &v)| ((row, (dimension * 8) - (1 + col)), v)).collect()
 }
 
 fn part2(puzzle_solution: &PuzzleSolution) {
