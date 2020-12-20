@@ -1,3 +1,4 @@
+#[macro_use] extern crate lazy_static;
 use std::collections::{HashMap, HashSet, VecDeque};
 use util::res::Result;
 
@@ -223,10 +224,6 @@ fn solve_puzzle(tiles: &HashMap<u64, Tile>) -> PuzzleSolution {
     }
 }
 
-fn part1(puzzle_solution: &PuzzleSolution) {
-    println!("[Part 1] Product of corner tile IDs: {}", puzzle_solution.corner_id_product);
-}
-
 fn rotate_image_left(raw: &HashMap<(usize, usize), bool>, dimension: usize) -> HashMap<(usize, usize), bool> {
     raw.iter().map(|(&(row, col), &v)| (((dimension * 8) - (1 + col), row), v)).collect()
 }
@@ -235,8 +232,62 @@ fn flip_image_horizontal(raw: &HashMap<(usize, usize), bool>, dimension: usize) 
     raw.iter().map(|(&(row, col), &v)| ((row, (dimension * 8) - (1 + col)), v)).collect()
 }
 
+// Returns count of # tiles before and after applying the sea monster kernel:
+// ..................#.
+// #....##....##....###
+// .#..#..#..#..#..#...
+fn try_sea_monster_kernel(raw: &HashMap<(usize, usize), bool>, dimension: usize) -> (usize, usize) {
+    lazy_static! {
+        // Vec of row/col offsets for the sea monster kernel
+        static ref KERNEL: Vec<(usize, usize)> = vec![
+            (0, 18),
+            (1, 0), (1, 5), (1, 6), (1, 11), (1, 12), (1, 17), (1, 18), (1, 19),
+            (2, 1), (2, 4), (2, 7), (2, 10), (2, 13), (2, 16),
+        ];
+    }
+
+    let mut without_sea_monsters = raw.clone();
+    for kernel_check_row_offset in 0..=(8 * dimension - 3) {
+        for kernel_check_col_offset in 0..=(8 * dimension - 20) {
+            let to_check = KERNEL.iter().map(|(row_off, col_off)| {
+                (kernel_check_row_offset + row_off, kernel_check_col_offset + col_off)
+            }).collect::<Vec<(usize, usize)>>();
+
+            if to_check.iter().all(|coords| *raw.get(coords).unwrap()) {
+                // The kernel matched! Remove all these # tiles from the image without sea monsters
+                to_check.iter().for_each(|coords| {
+                    without_sea_monsters.entry(*coords).and_modify(|e| *e = false);
+                });
+            }
+        }
+    }
+
+    (
+        raw.values().filter(|&&v| v).count(),
+        without_sea_monsters.values().filter(|&&v| v).count()
+    )
+}
+
+fn part1(puzzle_solution: &PuzzleSolution) {
+    println!("[Part 1] Product of corner tile IDs: {}", puzzle_solution.corner_id_product);
+}
+
 fn part2(puzzle_solution: &PuzzleSolution) {
-    // TODO
+    let mut image = puzzle_solution.raw_image.clone();
+    for _ in 0..2 { // unflipped, flipped
+        for _ in 0..4 { // all 4 rotations
+            let (before, after) = try_sea_monster_kernel(&image, puzzle_solution.dimension);
+            if after < before {
+                println!("[Part 2] Water roughness: {}", after);
+                return;
+            }
+
+            image = rotate_image_left(&image, puzzle_solution.dimension);
+        }
+        image = flip_image_horizontal(&image, puzzle_solution.dimension);
+    }
+
+    println!("[Part 2] Found no flip/rotation that matched the sea monster kernel!");
 }
 
 fn main() -> Result<()> {
