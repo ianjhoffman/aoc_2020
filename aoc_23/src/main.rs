@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use util::res::Result;
 
 struct Cups {
@@ -15,28 +14,18 @@ impl Cups {
         Cups{ curr: order[0], circle }
     }
 
-    fn next_3(&mut self) -> [(usize, usize); 3] {
-        let mut out = [(0, 0); 3];
-        let mut next_val = self.circle[self.curr];
-        for i in 0..3 {
-            let curr_val = next_val;
-            next_val = self.circle[curr_val];
-            out[i] = (curr_val, next_val);
-        }
-        out
-    }
-
     fn do_move(&mut self) {
-        let next3 = self.next_3();
-        let mut dest = self.curr;
-        loop {
-            dest = if dest == 1 { self.circle.len() - 1 } else { dest - 1 };
-            if next3[0].0 != dest && next3[1].0 != dest && next3[2].0 != dest { break }
-        }
+        let next1 = self.circle[self.curr];
+        let next2 = self.circle[next1];
+        let next3 = self.circle[next2];
+        let next4 = self.circle[next3];
+        let dest = (1..self.curr).rev()
+            .chain(((self.circle.len() - 4)..=(self.circle.len() - 1)).rev())
+            .find(|e| next1 != *e && next2 != *e && next3 != *e).unwrap();
 
-        self.circle[self.curr] = next3[2].1;
-        self.circle[next3[2].0] = self.circle[dest];
-        self.circle[dest] = next3[0].0;
+        self.circle[self.curr] = next4;
+        self.circle[next3] = self.circle[dest];
+        self.circle[dest] = next1;
         self.curr = self.circle[self.curr];
     }
 
