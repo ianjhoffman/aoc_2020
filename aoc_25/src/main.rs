@@ -12,8 +12,17 @@ fn fast_modular_exponentiation(base: i128, exponent: i128, modulus: i128) -> i12
     out
 }
 
+/**
+ * I was using fast_modular_exponentiation here but the values are small enough
+ * (and each value we test is easy to compute from the previous) that that approach
+ * was way slower than just doing it this way. That approach looked like this:
+ *
+ * (2..).find(|loop_size| fast_modular_exponentiation(7, *loop_size, 20201227) == public_key).unwrap()
+ */
 fn brute_force_loop_size(public_key: i128) -> i128 {
-    (2..).find(|loop_size| fast_modular_exponentiation(7, *loop_size, 20201227) == public_key).unwrap()
+    std::iter::successors(Some(7), |val| {
+        Some((val * 7) % 20201227)
+    }).enumerate().find(|(_, val)| *val == public_key).unwrap().0 as i128 + 1
 }
 
 fn part1(public_keys: (i128, i128)) {
